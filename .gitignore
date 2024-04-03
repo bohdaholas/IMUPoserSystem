@@ -1,3 +1,8 @@
+IMUNode/central/build
+IMUNode/periph/build
+
+*.idea
+*.PVS-Studio
 # Prerequisites
 *.d
 
