@@ -1,3 +1,7 @@
+Visualizer/4.2
+Visualizer/lib	
+Visualizer/*runtime*
+
 # Prerequisites
 *.d
 
