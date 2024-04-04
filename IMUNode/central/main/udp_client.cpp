@@ -12,7 +12,10 @@ constexpr size_t UDP_PORT = 1234;
 
 void UdpClient::udp_send_task(void *pvParameters) {
   char buff[100];
-  sprintf(buff, "%f,%f,%f\n", gatt.ax, gatt.ay, gatt.az);
+  sprintf(buff, "%f,%f,%f\n", gatt.ay, gatt.ax, gatt.az);
+
+  if (!udp_client.wifi_connected)
+    vTaskDelete(nullptr);
 
   if (sendto(udp_client.udp_socket, buff, strlen(buff), 0,
              (struct sockaddr *)& udp_client.udp_server_addr, sizeof(udp_server_addr)) < 0) {
@@ -41,7 +44,7 @@ void UdpClient::init() {
   udp_server_addr.sin_family = AF_INET;
   udp_server_addr.sin_port = htons(UDP_PORT);
 
-  udp_timer_handle = xTimerCreate("udp_timer", pdMS_TO_TICKS(1000), pdTRUE, (void *)0, udp_timer_callback);
+  udp_timer_handle = xTimerCreate("udp_timer", pdMS_TO_TICKS(10), pdTRUE, (void *)0, udp_timer_callback);
 
   if (udp_timer_handle == nullptr) {
     ESP_LOGE("app_main", "Timer create failed");
@@ -61,6 +64,7 @@ void UdpClient::wifi_event_handler(void *event_handler_arg, esp_event_base_t eve
   }
   else if (event_id == WIFI_EVENT_STA_CONNECTED)
   {
+    udp_client.wifi_connected = true;
     printf("WiFi CONNECTED\n");
   }
   else if (event_id == WIFI_EVENT_STA_DISCONNECTED)

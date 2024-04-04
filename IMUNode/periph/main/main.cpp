@@ -7,6 +7,7 @@
 #include "services/gap/ble_svc_gap.h"
 #include "gap.h"
 #include "gatt.h"
+#include "imu.h"
 
 static constexpr const char *device_name_cmplt = "leaf_imu_prph";
 static constexpr const char *device_name_short = "imu";
@@ -43,10 +44,10 @@ void nimble_init() {
 extern "C" void app_main()
 {
     nvs_init();
+    imu.init();
     nimble_init();
     gap.init(device_name_cmplt, device_name_short);
     gatt.init();
-
     nimble_port_freertos_init(ble_htp_prph_host_task);
 }
 

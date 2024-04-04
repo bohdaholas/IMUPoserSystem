@@ -9,6 +9,9 @@
 #include <os/os_mbuf.h>
 #include "gatt.h"
 #include "gap.h"
+#include "imu.h"
+
+constexpr const char *tag = "BNO055";
 
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     /* Device Information Service */
@@ -158,17 +161,18 @@ int GATT::ble_svc_imu_notify(uint16_t conn_handle) {
   struct os_mbuf *om;
   static uint8_t imu_payload[12];
 
-  static float x_angle = 0.0f;
-  static float y_angle = 0.0f;
-  static float z_angle = 0.0f;
+  bno055_calibration_t cal = imu.getCalibration();
+  bno055_vector_t v = imu.getVectorEuler();
+  ESP_LOGI(tag, "Euler: X: %.1f Y: %.1f Z: %.1f || Calibration SYS: %u GYRO: %u ACC:%u MAG:%u",
+           v.x, v.y, v.z,
+           cal.sys, cal.gyro, cal.accel, cal.mag);
 
-  x_angle += 0.1f;
-  y_angle += 0.2f;
-  z_angle += 0.4f;
-
-  memcpy(&imu_payload[0], &x_angle, sizeof(float));
-  memcpy(&imu_payload[4], &y_angle, sizeof(float));
-  memcpy(&imu_payload[8], &z_angle, sizeof(float));
+  auto ax = static_cast<float>(v.x);
+  auto ay = static_cast<float>(v.y);
+  auto az = static_cast<float>(v.z);
+  memcpy(&imu_payload[0], &ax, sizeof(float));
+  memcpy(&imu_payload[4], &ay, sizeof(float));
+  memcpy(&imu_payload[8], &az, sizeof(float));
 
   for (unsigned char i : imu_payload) {
     printf("%02x ", i);
@@ -212,7 +216,7 @@ int GATT::init() {
     return rc;
   }
 
-  ble_imu_prph_tx_timer = xTimerCreate("ble_imu_prph_tx_timer", pdMS_TO_TICKS(1000), pdTRUE,
+  ble_imu_prph_tx_timer = xTimerCreate("ble_imu_prph_tx_timer", pdMS_TO_TICKS(10), pdTRUE,
                                             (void *)0, GATT::ble_imu_prph_tx);
 
   return 0;

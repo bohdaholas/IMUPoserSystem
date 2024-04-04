@@ -15,6 +15,7 @@ public:
     int udp_socket;
     struct sockaddr_in udp_server_addr;
     TimerHandle_t udp_timer_handle;
+    bool wifi_connected = false;
 };
 
 inline UdpClient udp_client;

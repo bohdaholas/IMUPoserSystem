@@ -1,0 +1,5 @@
+dependencies:
+  idf:
+    version: ">=4.1.0"
+  BNO055ESP32:
+    git: https://github.com/ShellAddicted/BNO055ESP32.git
