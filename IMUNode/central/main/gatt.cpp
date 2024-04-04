@@ -18,8 +18,6 @@ void GATT::handle_subscription_rx(struct ble_gap_event *event) {
 
   rc = os_mbuf_copydata(event->notify_rx.om, 0, data_len, data_buf);
   if (rc == 0) {
-    float ax, ay, az;
-
     memcpy(&ax, &data_buf[0], sizeof(float));
     memcpy(&ay, &data_buf[4], sizeof(float));
     memcpy(&az, &data_buf[8], sizeof(float));
@@ -62,5 +60,7 @@ void GATT::ble_central_subscribe(const struct peer *peer) {
   ble_gap_terminate(peer->conn_handle, BLE_ERR_REM_USER_CONN_TERM);
 }
 
-void GATT::init() {}
+void GATT::init() {
+  ax = ay = az = 0;
+}
 

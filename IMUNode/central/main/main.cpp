@@ -8,6 +8,7 @@
 #include "esp_central.h"
 #include "gap.h"
 #include "gatt.h"
+#include "udp_client.h"
 
 static constexpr const char *device_name_cmplt = "leaf_imu_prph";
 
@@ -24,6 +25,7 @@ void nvs_init() {
 
 void ble_imu_central_host_task(void *param)
 {
+  ble_store_config_init();
   nimble_port_run(); // returns only when nimble_port_stop() is executed
   nimble_port_freertos_deinit();
 }
@@ -48,6 +50,6 @@ extern "C" void app_main() {
   nimble_init();
   gap.init(device_name_cmplt);
   gatt.init();
-  ble_store_config_init();
+  udp_client.init();
   nimble_port_freertos_init(ble_imu_central_host_task);
 }

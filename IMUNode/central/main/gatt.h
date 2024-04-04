@@ -25,6 +25,8 @@ public:
     void handle_subscription_rx(struct ble_gap_event *event);
     void ble_central_subscribe(const struct peer *peer);
     void init();
+
+    float ax, ay, az;
 };
 
 inline GATT gatt;
