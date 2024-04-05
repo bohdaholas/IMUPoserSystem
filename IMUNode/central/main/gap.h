@@ -7,6 +7,11 @@
 extern "C" {
 #endif
 
+constexpr size_t MAX_CONNECTIONS_NUM = MYNEWT_VAL(BLE_MAX_CONNECTIONS);
+constexpr size_t MAX_SVCS = MYNEWT_VAL(BLE_MAX_CONNECTIONS) * 2;
+constexpr size_t MAX_CHRS = MYNEWT_VAL(BLE_MAX_CONNECTIONS) * 7;
+constexpr size_t MAX_DSCS = MYNEWT_VAL(BLE_MAX_CONNECTIONS) * 1;
+
 class GAP {
 public:
     static void ble_central_on_sync();
@@ -20,6 +25,7 @@ private:
     static void ble_central_on_disc_complete(const struct peer *peer, int status, void *arg);
 
     std::string dev_name_cmplt;
+    uint8_t connections_num;
 };
 
 inline GAP gap;

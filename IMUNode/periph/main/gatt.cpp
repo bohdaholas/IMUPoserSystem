@@ -161,18 +161,30 @@ int GATT::ble_svc_imu_notify(uint16_t conn_handle) {
   struct os_mbuf *om;
   static uint8_t imu_payload[12];
 
-  bno055_calibration_t cal = imu.getCalibration();
-  bno055_vector_t v = imu.getVectorEuler();
-  ESP_LOGI(tag, "Euler: X: %.1f Y: %.1f Z: %.1f || Calibration SYS: %u GYRO: %u ACC:%u MAG:%u",
-           v.x, v.y, v.z,
-           cal.sys, cal.gyro, cal.accel, cal.mag);
+  static float x_angle = 5.0f;
+  static float y_angle = 150.0f;
+  static float z_angle = 50.0f;
 
-  auto ax = static_cast<float>(v.x);
-  auto ay = static_cast<float>(v.y);
-  auto az = static_cast<float>(v.z);
-  memcpy(&imu_payload[0], &ax, sizeof(float));
-  memcpy(&imu_payload[4], &ay, sizeof(float));
-  memcpy(&imu_payload[8], &az, sizeof(float));
+  x_angle += 0.1f;
+  y_angle += 0.2f;
+  z_angle += 0.4f;
+
+  memcpy(&imu_payload[0], &x_angle, sizeof(float));
+  memcpy(&imu_payload[4], &y_angle, sizeof(float));
+  memcpy(&imu_payload[8], &z_angle, sizeof(float));
+
+//  bno055_calibration_t cal = imu.getCalibration();
+//  bno055_vector_t v = imu.getVectorEuler();
+//  ESP_LOGI(tag, "Euler: X: %.1f Y: %.1f Z: %.1f || Calibration SYS: %u GYRO: %u ACC:%u MAG:%u",
+//           v.x, v.y, v.z,
+//           cal.sys, cal.gyro, cal.accel, cal.mag);
+//
+//  auto ax = static_cast<float>(v.x);
+//  auto ay = static_cast<float>(v.y);
+//  auto az = static_cast<float>(v.z);
+//  memcpy(&imu_payload[0], &ax, sizeof(float));
+//  memcpy(&imu_payload[4], &ay, sizeof(float));
+//  memcpy(&imu_payload[8], &az, sizeof(float));
 
   for (unsigned char i : imu_payload) {
     printf("%02x ", i);
@@ -216,7 +228,7 @@ int GATT::init() {
     return rc;
   }
 
-  ble_imu_prph_tx_timer = xTimerCreate("ble_imu_prph_tx_timer", pdMS_TO_TICKS(10), pdTRUE,
+  ble_imu_prph_tx_timer = xTimerCreate("ble_imu_prph_tx_timer", pdMS_TO_TICKS(1000), pdTRUE,
                                             (void *)0, GATT::ble_imu_prph_tx);
 
   return 0;

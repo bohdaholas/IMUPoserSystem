@@ -44,7 +44,7 @@ void nimble_init() {
 extern "C" void app_main()
 {
     nvs_init();
-    imu.init();
+//    imu.init();
     nimble_init();
     gap.init(device_name_cmplt, device_name_short);
     gatt.init();

@@ -38,7 +38,7 @@ int GAP::ble_central_gap_event(struct ble_gap_event *event, void *arg) {
 
     case BLE_GAP_EVENT_CONNECT:
       if (event->connect.status == 0) {
-        MODLOG_DFLT(INFO, "Connection established ");
+        MODLOG_DFLT(INFO, "Connection established. Handle:%d", event->connect.conn_handle);
 
         rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
         assert(rc == 0);
@@ -52,26 +52,30 @@ int GAP::ble_central_gap_event(struct ble_gap_event *event, void *arg) {
         }
 
         rc = peer_disc_all(event->connect.conn_handle,
-                           gap.ble_central_on_disc_complete, nullptr);
+                           GAP::ble_central_on_disc_complete, nullptr);
         if (rc != 0) {
           MODLOG_DFLT(ERROR, "Failed to discover services; rc=%d\n", rc);
           return 0;
         }
+        printf("Connection added, Connections num: %d\n", ++gap.connections_num);
       } else {
 
         MODLOG_DFLT(ERROR, "Error: Connection failed; status=%d\n",
                     event->connect.status);
-        gap.ble_central_scan();
       }
 
+      if (gap.connections_num < MAX_CONNECTIONS_NUM) {
+        gap.ble_central_scan();
+      }
       return 0;
 
     case BLE_GAP_EVENT_DISCONNECT:
-      MODLOG_DFLT(INFO, "disconnect; reason=%d ", event->disconnect.reason);
+      MODLOG_DFLT(INFO, "disconnect; reason=%d; total=%d ", event->disconnect.reason, gap.connections_num);
       print_conn_desc(&event->disconnect.conn);
       MODLOG_DFLT(INFO, "\n");
 
       peer_delete(event->disconnect.conn.conn_handle);
+      printf("Connection removed, Connections num: %d\n", --gap.connections_num);
 
       gap.ble_central_scan();
       return 0;
@@ -205,7 +209,7 @@ void GAP::ble_central_on_disc_complete(const struct peer *peer, int status, void
 }
 
 void GAP::init(const std::string &cmplt_name) {
-  int rc = peer_init(MYNEWT_VAL(BLE_MAX_CONNECTIONS), 64, 64, 64);
+  int rc = peer_init(MAX_CONNECTIONS_NUM, MAX_SVCS, MAX_CHRS, MAX_DSCS);
   assert(rc == 0);
   dev_name_cmplt = cmplt_name;
 

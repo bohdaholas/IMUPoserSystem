@@ -1,14 +1,11 @@
 #include <host/ble_gatt.h>
 #include <services/gap/ble_svc_gap.h>
-#include <services/gatt/ble_svc_gatt.h>
 #include <host/ble_hs_mbuf.h>
 #include <cstring>
 #include "host/ble_hs.h"
 #include "esp_log.h"
-#include "freertos/FreeRTOSConfig.h"
 #include <os/os_mbuf.h>
 #include "gatt.h"
-#include "gap.h"
 #include "esp_central.h"
 
 void GATT::handle_subscription_rx(struct ble_gap_event *event) {

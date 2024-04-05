@@ -1,5 +1,6 @@
 IMUNode/central/build
 IMUNode/periph/build
+IMUNode/periph/managed_components
 
 *.idea
 *.PVS-Studio
