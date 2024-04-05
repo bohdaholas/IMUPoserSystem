@@ -15,11 +15,13 @@ void GATT::handle_subscription_rx(struct ble_gap_event *event) {
 
   rc = os_mbuf_copydata(event->notify_rx.om, 0, data_len, data_buf);
   if (rc == 0) {
-    memcpy(&ax, &data_buf[0], sizeof(float));
-    memcpy(&ay, &data_buf[4], sizeof(float));
-    memcpy(&az, &data_buf[8], sizeof(float));
+    euler_angles_t orientation_euler;
+    for(size_t i = 0; i < orientation_euler.size(); ++i) {
+      memcpy(&orientation_euler[i], data_buf + (i * sizeof(float)), sizeof(float));
+    }
+    nodes_data[event->connect.conn_handle].orientation = orientation_euler;
 
-    printf("Received floats: ax=%f, ay=%f, az=%f\n", ax, ay, az);
+    printf("Received floats: ax=%f, ay=%f, az=%f\n", orientation_euler[0], orientation_euler[1], orientation_euler[2]);
   } else {
     printf("Error: Failed to copy data from mbuf.\n");
   }
@@ -57,7 +59,5 @@ void GATT::ble_central_subscribe(const struct peer *peer) {
   ble_gap_terminate(peer->conn_handle, BLE_ERR_REM_USER_CONN_TERM);
 }
 
-void GATT::init() {
-  ax = ay = az = 0;
-}
+void GATT::init() {}
 

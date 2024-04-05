@@ -50,6 +50,6 @@ extern "C" void app_main() {
   nimble_init();
   gap.init(device_name_cmplt);
   gatt.init();
-  udp_client.init();
+//  udp_client.init();
   nimble_port_freertos_init(ble_imu_central_host_task);
 }

@@ -12,7 +12,7 @@ constexpr size_t UDP_PORT = 1234;
 
 void UdpClient::udp_send_task(void *pvParameters) {
   char buff[100];
-  sprintf(buff, "%f,%f,%f\n", gatt.ay, gatt.ax, gatt.az);
+//  sprintf(buff, "%f,%f,%f\n", gatt.ay, gatt.ax, gatt.az);
 
   if (!udp_client.wifi_connected)
     vTaskDelete(nullptr);
