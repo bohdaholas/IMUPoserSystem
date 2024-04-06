@@ -9,7 +9,7 @@
 #include <os/os_mbuf.h>
 #include "gatt.h"
 #include "gap.h"
-#include "imu.h"
+#include "nvs_utils.h"
 
 constexpr const char *tag = "BNO055";
 
@@ -152,8 +152,22 @@ int GATT::imu_meas_chr_access_cb(uint16_t conn_handle, uint16_t attr_handle,
 
 int GATT::imu_bodyloc_chr_access_cb(uint16_t conn_handle, uint16_t attr_handle,
                                     struct ble_gatt_access_ctxt *ctxt, void *arg) {
-  printf("I'm there\n");
-  return 0;
+  constexpr size_t MAX_BODYLOC_SIZE = 16;
+  static bool body_loc_already_retrieved = false;
+  static char body_loc_str[MAX_BODYLOC_SIZE];
+  static size_t actual_size;
+
+  if (!body_loc_already_retrieved) {
+    read_string_from_nvs("BodyLoc", body_loc_str, &actual_size);
+    body_loc_already_retrieved = true;
+  }
+  int rc = os_mbuf_append(ctxt->om, &body_loc_str, actual_size - 1); // actual_size - 1 == strlen(body_loc_str)
+  if (rc == 0) {
+    printf("BodyLocation characteristics is read successfully\n");
+  } else {
+    printf("Error reading BodyLocation characteristics\n");
+  }
+  return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 }
 
 int GATT::ble_svc_imu_notify(uint16_t conn_handle) {

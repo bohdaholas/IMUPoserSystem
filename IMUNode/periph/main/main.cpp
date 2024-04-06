@@ -8,20 +8,12 @@
 #include "gap.h"
 #include "gatt.h"
 #include "imu.h"
+#include "nvs_utils.h"
 
 static constexpr const char *device_name_cmplt = "leaf_imu_prph";
 static constexpr const char *device_name_short = "imu";
 
-void nvs_init() {
-  esp_err_t ret = nvs_flash_init();
-  if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-    ESP_ERROR_CHECK(nvs_flash_erase());
-    ret = nvs_flash_init();
-  }
-  ESP_ERROR_CHECK(ret);
-}
-
-void ble_htp_prph_host_task(void *param)
+void ble_imu_prph_host_task(void *param)
 {
     nimble_port_run(); // returns only when nimble_port_stop() is executed
     nimble_port_freertos_deinit();
@@ -48,6 +40,6 @@ extern "C" void app_main()
     nimble_init();
     gap.init(device_name_cmplt, device_name_short);
     gatt.init();
-    nimble_port_freertos_init(ble_htp_prph_host_task);
+    nimble_port_freertos_init(ble_imu_prph_host_task);
 }
 
