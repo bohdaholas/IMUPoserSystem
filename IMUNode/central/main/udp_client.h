@@ -4,6 +4,10 @@
 #include <lwip/sockets.h>
 #include <esp_event.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 class UdpClient {
 public:
     void init();
@@ -19,5 +23,9 @@ public:
 };
 
 inline UdpClient udp_client;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //CENTRAL_UDP_CLIENT_H

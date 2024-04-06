@@ -4,6 +4,11 @@
 #include <host/ble_uuid.h>
 #include <array>
 #include <map>
+#include <string>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 constexpr ble_uuid16_t DIS_SVC_UUID = BLE_UUID16_INIT(0x180A);
 constexpr ble_uuid16_t DIS_SVC_CHR_MFC_NAME_UUID = BLE_UUID16_INIT(0x2A23);
@@ -19,38 +24,33 @@ constexpr ble_uuid128_t IMU_SVC_CHR_DATA_UUID =
 constexpr ble_uuid128_t IMU_SVC_CHR_BODYLOC_UUID =
     BLE_UUID128_INIT(0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
                      0x39, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46);
-enum class BodyLoc {
-    PELVIS          = 0,
-    SPINE           = 1,
-    HEAD            = 2,
-    LEFT_HIP        = 3,
-    RIGHT_HIP       = 4,
-    LEFT_KNEE       = 5,
-    RIGHT_KNEE      = 6,
-    LEFT_SHOULDER   = 7,
-    RIGHT_SHOULDER  = 8,
-    LEFT_ELBOW      = 9,
-    RIGHT_ELBOW     = 10
-};
-
 constexpr ble_uuid16_t CCCD = BLE_UUID16_INIT(0x2902);
+constexpr size_t MAX_BODYLOC_SIZE = 16;
 
 class GATT {
 public:
-    void handle_subscription_rx(struct ble_gap_event *event);
+    void handle_notification(struct ble_gap_event *event);
+    void ble_central_read(const struct peer *peer);
+    static int ble_central_read_cb(uint16_t conn_handle, const struct ble_gatt_error *error,
+                                   struct ble_gatt_attr *attr, void *arg);
     void ble_central_subscribe(const struct peer *peer);
+
     void init();
 
 private:
     using conn_handle_t = uint16_t;
     using euler_angles_t = std::array<float, 3>;
     struct node_data_t {
-        BodyLoc location;
+        char body_loc_cstr[MAX_BODYLOC_SIZE];
         euler_angles_t orientation;
     };
     std::map<conn_handle_t, node_data_t> nodes_data;
 };
 
 inline GATT gatt;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //PERIPH_GATT_H

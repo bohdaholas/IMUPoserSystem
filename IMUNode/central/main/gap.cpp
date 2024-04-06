@@ -102,7 +102,7 @@ int GAP::ble_central_gap_event(struct ble_gap_event *event, void *arg) {
                   event->notify_rx.conn_handle,
                   event->notify_rx.attr_handle,
                   OS_MBUF_PKTLEN(event->notify_rx.om));
-      gatt.handle_subscription_rx(event);
+      gatt.handle_notification(event);
       return 0;
     }
     default:
@@ -205,7 +205,7 @@ void GAP::ble_central_on_disc_complete(const struct peer *peer, int status, void
   MODLOG_DFLT(INFO, "Service discovery complete; status=%d "
                     "conn_handle=%d\n", status, peer->conn_handle);
 
-  gatt.ble_central_subscribe(peer);
+  gatt.ble_central_read(peer);
 }
 
 void GAP::init(const std::string &cmplt_name) {

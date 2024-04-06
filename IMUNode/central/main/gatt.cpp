@@ -8,7 +8,7 @@
 #include "gatt.h"
 #include "esp_central.h"
 
-void GATT::handle_subscription_rx(struct ble_gap_event *event) {
+void GATT::handle_notification(struct ble_gap_event *event) {
   int rc;
   int data_len = OS_MBUF_PKTLEN(event->notify_rx.om);
   char data_buf[data_len];
@@ -25,6 +25,67 @@ void GATT::handle_subscription_rx(struct ble_gap_event *event) {
   } else {
     printf("Error: Failed to copy data from mbuf.\n");
   }
+}
+
+void GATT::ble_central_read(const struct peer *peer) {
+  int rc;
+  const struct peer_chr *chr;
+
+  chr = peer_chr_find_uuid(peer,
+                           &IMU_SVC_UUID.u,
+                           &IMU_SVC_CHR_BODYLOC_UUID.u);
+  if (chr == nullptr) {
+    MODLOG_DFLT(ERROR, "Error: Peer doesn't support the BodyLoc characteristic\n");
+    goto err;
+  }
+
+  rc = ble_gattc_read(peer->conn_handle, chr->chr.val_handle,
+                      GATT::ble_central_read_cb, nullptr);
+  if (rc != 0) {
+    MODLOG_DFLT(ERROR, "Error: Failed to read the characteristic; "
+                       "rc=%d\n", rc);
+    goto err;
+  }
+
+  return;
+err:
+  ble_gap_terminate(peer->conn_handle, BLE_ERR_REM_USER_CONN_TERM);
+}
+
+int GATT::ble_central_read_cb(uint16_t conn_handle, const struct ble_gatt_error *error,
+                               struct ble_gatt_attr *attr, void *arg) {
+  MODLOG_DFLT(INFO, "Read body location completed; status=%d conn_handle=%d\n",
+              error->status, conn_handle);
+  if (error->status != 0) {
+    MODLOG_ERROR(INFO, "Error reading body location characteristic");
+    return error->status;
+  }
+
+  if (attr->om == nullptr) {
+    MODLOG_ERROR(INFO, "No data received");
+    return BLE_ATT_ERR_UNLIKELY;
+  }
+
+  size_t data_len = OS_MBUF_PKTLEN(attr->om);
+  if (data_len == 0) {
+    MODLOG_ERROR(INFO, "No data received");
+    return BLE_ATT_ERR_UNLIKELY;
+  }
+
+  if (data_len > MAX_BODYLOC_SIZE - 1) {
+    MODLOG_ERROR(INFO, "Too much data received");
+    return BLE_ATT_ERR_UNLIKELY;
+  }
+  node_data_t node_data{};
+  os_mbuf_copydata(attr->om, 0, static_cast<int>(data_len), node_data.body_loc_cstr);
+  node_data.body_loc_cstr[data_len] = '\0';
+
+  printf("BodyLoc is %s\n", node_data.body_loc_cstr);
+
+  const struct peer *peer = peer_find(conn_handle);
+  gatt.ble_central_subscribe(peer);
+
+  return 0;
 }
 
 void GATT::ble_central_subscribe(const struct peer *peer) {
@@ -54,10 +115,11 @@ void GATT::ble_central_subscribe(const struct peer *peer) {
   }
 
   return;
-  err:
-
+err:
   ble_gap_terminate(peer->conn_handle, BLE_ERR_REM_USER_CONN_TERM);
 }
 
 void GATT::init() {}
+
+
 
