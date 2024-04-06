@@ -7,6 +7,7 @@
 #include <os/os_mbuf.h>
 #include "gatt.h"
 #include "esp_central.h"
+#include "udp_client.h"
 
 void GATT::handle_notification(struct ble_gap_event *event) {
   int rc;
@@ -21,6 +22,9 @@ void GATT::handle_notification(struct ble_gap_event *event) {
     }
     nodes_data[event->connect.conn_handle].orientation = orientation_euler;
 
+    if(xQueueSend(udp_client.nodeDataQueue, &nodes_data[event->connect.conn_handle], portMAX_DELAY) != pdPASS) {
+      printf("Error: Failed to push data to the queue\n");
+    }
     printf("Received floats: ax=%f, ay=%f, az=%f\n", orientation_euler[0], orientation_euler[1], orientation_euler[2]);
   } else {
     printf("Error: Failed to copy data from mbuf.\n");
@@ -76,11 +80,14 @@ int GATT::ble_central_read_cb(uint16_t conn_handle, const struct ble_gatt_error 
     MODLOG_ERROR(INFO, "Too much data received");
     return BLE_ATT_ERR_UNLIKELY;
   }
-  node_data_t node_data{};
-  os_mbuf_copydata(attr->om, 0, static_cast<int>(data_len), node_data.body_loc_cstr);
-  node_data.body_loc_cstr[data_len] = '\0';
 
-  printf("BodyLoc is %s\n", node_data.body_loc_cstr);
+  char body_loc_cstr[data_len + 1];
+  os_mbuf_copydata(attr->om, 0, static_cast<int>(data_len), body_loc_cstr);
+  body_loc_cstr[data_len] = '\0';
+  printf("BodyLoc is %s\n", body_loc_cstr);
+
+  node_data_t node_data{};
+  node_data.body_loc_str = body_loc_cstr;
 
   const struct peer *peer = peer_find(conn_handle);
   gatt.ble_central_subscribe(peer);

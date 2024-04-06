@@ -11,24 +11,29 @@ constexpr const char *UDP_IP_ADDRESS = "192.168.72.165";
 constexpr size_t UDP_PORT = 1234;
 
 void UdpClient::udp_send_task(void *pvParameters) {
-  char buff[100];
-//  sprintf(buff, "%f,%f,%f\n", gatt.ay, gatt.ax, gatt.az);
+  for(;;) {
+    GATT::node_data_t node_data{};
+    char buff[100];
+    if(xQueueReceive(udp_client.nodeDataQueue, &node_data, portMAX_DELAY) != pdPASS) {
+      printf("Error when reading from a queue\n");
+      continue;
+    }
 
-  if (!udp_client.wifi_connected)
-    vTaskDelete(nullptr);
+    auto [ax, ay, az] = node_data.orientation;
+    printf("%s,%f,%f,%f\n", node_data.body_loc_str.c_str(), ax, ay, az);
+    sprintf(buff, "%s,%f,%f,%f\n", node_data.body_loc_str.c_str(), ax, ay, az);
 
-  if (sendto(udp_client.udp_socket, buff, strlen(buff), 0,
-             (struct sockaddr *)& udp_client.udp_server_addr, sizeof(udp_server_addr)) < 0) {
-    ESP_LOGE("udp_send_task", "Error occurred during sending: errno %d", errno);
-  } else {
-    ESP_LOGI("udp_send_task", "Packet sent successfully");
+    if (!udp_client.wifi_connected) {
+      printf("Error not connected to wifi\n");
+      continue;
+    }
+    if (sendto(udp_client.udp_socket, buff, strlen(buff), 0,
+               (struct sockaddr *)& udp_client.udp_server_addr, sizeof(udp_server_addr)) < 0) {
+      ESP_LOGE("udp_send_task", "Error occurred during sending: errno %d", errno);
+    } else {
+      ESP_LOGI("udp_send_task", "Packet sent successfully");
+    }
   }
-
-  vTaskDelete(nullptr);
-}
-
-void UdpClient::udp_timer_callback(TimerHandle_t xTimer) {
-  xTaskCreate(udp_send_task, "udp_send_task", 2048, nullptr, 5, nullptr);
 }
 
 void UdpClient::init() {
@@ -44,15 +49,13 @@ void UdpClient::init() {
   udp_server_addr.sin_family = AF_INET;
   udp_server_addr.sin_port = htons(UDP_PORT);
 
-  udp_timer_handle = xTimerCreate("udp_timer", pdMS_TO_TICKS(10), pdTRUE, (void *)0, udp_timer_callback);
-
-  if (udp_timer_handle == nullptr) {
-    ESP_LOGE("app_main", "Timer create failed");
-  } else {
-    if (xTimerStart(udp_timer_handle, 10) != pdPASS) {
-      ESP_LOGE("app_main", "Timer start failed");
-    }
+  nodeDataQueue = xQueueCreate(10, sizeof(GATT::node_data_t));
+  if (nodeDataQueue == nullptr) {
+    printf("Failed to create queue instance\n");
+    return;
   }
+
+  xTaskCreate(udp_send_task, "udp_send_task", 2048, nullptr, 1, nullptr);
 }
 
 void UdpClient::wifi_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id,

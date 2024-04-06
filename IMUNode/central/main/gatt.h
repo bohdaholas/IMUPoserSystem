@@ -37,13 +37,13 @@ public:
 
     void init();
 
-private:
     using conn_handle_t = uint16_t;
     using euler_angles_t = std::array<float, 3>;
     struct node_data_t {
-        char body_loc_cstr[MAX_BODYLOC_SIZE];
+        std::string body_loc_str;
         euler_angles_t orientation;
     };
+private:
     std::map<conn_handle_t, node_data_t> nodes_data;
 };
 
