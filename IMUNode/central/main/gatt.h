@@ -40,8 +40,8 @@ public:
     using conn_handle_t = uint16_t;
     using euler_angles_t = std::array<float, 3>;
     struct node_data_t {
-        std::string body_loc_str;
-        euler_angles_t orientation;
+        char body_loc_str[MAX_BODYLOC_SIZE];
+        euler_angles_t orientation{};
     };
 private:
     std::map<conn_handle_t, node_data_t> nodes_data;

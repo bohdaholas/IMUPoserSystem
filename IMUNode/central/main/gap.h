@@ -25,7 +25,7 @@ private:
     static void ble_central_on_disc_complete(const struct peer *peer, int status, void *arg);
 
     std::string dev_name_cmplt;
-    uint8_t connections_num;
+    uint8_t connections_num = 0;
 };
 
 inline GAP gap;

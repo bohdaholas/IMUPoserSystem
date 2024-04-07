@@ -20,8 +20,8 @@ void UdpClient::udp_send_task(void *pvParameters) {
     }
 
     auto [ax, ay, az] = node_data.orientation;
-    printf("%s,%f,%f,%f\n", node_data.body_loc_str.c_str(), ax, ay, az);
-    sprintf(buff, "%s,%f,%f,%f\n", node_data.body_loc_str.c_str(), ax, ay, az);
+    printf("%s,%f,%f,%f\n", node_data.body_loc_str, ax, ay, az);
+    sprintf(buff, "%s,%f,%f,%f\n", node_data.body_loc_str, ax, ay, az);
 
     if (!udp_client.wifi_connected) {
       printf("Error not connected to wifi\n");
