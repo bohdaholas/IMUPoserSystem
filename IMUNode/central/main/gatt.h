@@ -27,6 +27,13 @@ constexpr ble_uuid128_t IMU_SVC_CHR_BODYLOC_UUID =
 constexpr ble_uuid16_t CCCD = BLE_UUID16_INIT(0x2902);
 constexpr size_t MAX_BODYLOC_SIZE = 16;
 
+using conn_handle_t = uint16_t;
+using euler_angles_t = std::array<float, 3>;
+struct node_data_t {
+    char body_loc_str[MAX_BODYLOC_SIZE];
+    euler_angles_t orientation{};
+};
+
 class GATT {
 public:
     void handle_notification(struct ble_gap_event *event);
@@ -37,12 +44,6 @@ public:
 
     void init();
 
-    using conn_handle_t = uint16_t;
-    using euler_angles_t = std::array<float, 3>;
-    struct node_data_t {
-        char body_loc_str[MAX_BODYLOC_SIZE];
-        euler_angles_t orientation{};
-    };
 private:
     std::map<conn_handle_t, node_data_t> nodes_data;
 };

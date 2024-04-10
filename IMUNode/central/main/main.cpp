@@ -9,6 +9,7 @@
 #include "gap.h"
 #include "gatt.h"
 #include "udp_client.h"
+#include "imu.h"
 
 static constexpr const char *device_name_cmplt = "leaf_imu_prph";
 
@@ -47,9 +48,11 @@ void nimble_init() {
 
 extern "C" void app_main() {
   nvs_init();
+  imu.init();
   nimble_init();
   gap.init(device_name_cmplt);
   gatt.init();
   udp_client.init();
+  imu.start_producer();
   nimble_port_freertos_init(ble_imu_central_host_task);
 }

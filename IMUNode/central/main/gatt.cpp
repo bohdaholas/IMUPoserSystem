@@ -26,7 +26,6 @@ void GATT::handle_notification(struct ble_gap_event *event) {
     if(xQueueSend(udp_client.nodeDataQueue, &gatt.nodes_data[conn_handle], portMAX_DELAY) != pdPASS) {
       printf("Error: Failed to push data to the queue\n");
     }
-    printf("Received floats: ax=%f, ay=%f, az=%f\n", orientation_euler[0], orientation_euler[1], orientation_euler[2]);
   } else {
     printf("Error: Failed to copy data from mbuf.\n");
   }

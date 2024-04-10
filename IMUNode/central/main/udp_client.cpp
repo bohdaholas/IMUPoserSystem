@@ -7,12 +7,12 @@
 
 constexpr const char *SSID = "s23ultra";
 constexpr const char *PASSWORD = "12341234";
-constexpr const char *UDP_IP_ADDRESS = "192.168.72.165";
+constexpr const char *UDP_IP_ADDRESS = "192.168.42.165";
 constexpr size_t UDP_PORT = 1234;
 
 void UdpClient::udp_send_task(void *pvParameters) {
   for(;;) {
-    GATT::node_data_t node_data{};
+    node_data_t node_data{};
     char buff[100];
     if(xQueueReceive(udp_client.nodeDataQueue, &node_data, portMAX_DELAY) != pdPASS) {
       printf("Error when reading from a queue\n");
@@ -20,8 +20,8 @@ void UdpClient::udp_send_task(void *pvParameters) {
     }
 
     auto [ax, ay, az] = node_data.orientation;
-    printf("%s,%f,%f,%f\n", node_data.body_loc_str, ax, ay, az);
-    sprintf(buff, "%s,%f,%f,%f\n", node_data.body_loc_str, ax, ay, az);
+    printf("%s,%f,%f,%f\n", node_data.body_loc_str, -ay, ax, az);
+    sprintf(buff, "%s,%f,%f,%f\n", node_data.body_loc_str, -ay, ax, az);
 
     if (!udp_client.wifi_connected) {
       printf("Error not connected to wifi\n");
@@ -30,9 +30,10 @@ void UdpClient::udp_send_task(void *pvParameters) {
     if (sendto(udp_client.udp_socket, buff, strlen(buff), 0,
                (struct sockaddr *)& udp_client.udp_server_addr, sizeof(udp_server_addr)) < 0) {
       ESP_LOGE("udp_send_task", "Error occurred during sending: errno %d", errno);
-    } else {
-      ESP_LOGI("udp_send_task", "Packet sent successfully");
     }
+//    else {
+//      ESP_LOGI("udp_send_task", "Packet sent successfully");
+//    }
   }
 }
 
@@ -49,7 +50,7 @@ void UdpClient::init() {
   udp_server_addr.sin_family = AF_INET;
   udp_server_addr.sin_port = htons(UDP_PORT);
 
-  nodeDataQueue = xQueueCreate(10, sizeof(GATT::node_data_t));
+  nodeDataQueue = xQueueCreate(10, sizeof(node_data_t));
   if (nodeDataQueue == nullptr) {
     printf("Failed to create queue instance\n");
     return;
