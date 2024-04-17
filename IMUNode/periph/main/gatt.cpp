@@ -5,7 +5,6 @@
 #include <cstring>
 #include "host/ble_hs.h"
 #include "esp_log.h"
-#include "freertos/FreeRTOSConfig.h"
 #include <os/os_mbuf.h>
 #include "gatt.h"
 #include "gap.h"
@@ -83,39 +82,27 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
 
 };
 
-void GATT::ble_imu_prph_tx_stop() const {
-  xTimerStop(ble_imu_prph_tx_timer, 1000 / portTICK_PERIOD_MS );
-}
-
-void GATT::ble_imu_prph_tx_reset() const {
+void GATT::ble_imu_prph_tx(void *pvParameters) {
   int rc;
+  for(;;) {
+    quaternion_t orientation_quaternion{};
+    if(xQueueReceive(gatt.imu_queue_handle, &orientation_quaternion, portMAX_DELAY) != pdPASS) {
+      printf("Error when reading from a queue\n");
+      continue;
+    }
 
-  if (xTimerReset(ble_imu_prph_tx_timer, 1000 / portTICK_PERIOD_MS ) == pdPASS) {
-    rc = 0;
-  } else {
-    rc = 1;
+    if (!gap.get_sub()) {
+      continue;
+    }
+
+    gatt.node_data.orientation_quaternion = orientation_quaternion;
+    rc = gatt.ble_svc_imu_notify(&gatt.node_data, gap.get_conn_handle());
+    if (rc == 0) {
+      MODLOG_DFLT(INFO, "Notification sent successfully");
+    } else {
+      MODLOG_DFLT(INFO, "Error in sending notification");
+    }
   }
-
-  assert(rc == 0);
-}
-
-void GATT::ble_imu_prph_tx(TimerHandle_t ev) {
-  int rc;
-
-  if (!gap.get_sub()) {
-    gatt.ble_imu_prph_tx_stop();
-    printf("\nreturn");
-    return;
-  }
-
-  rc = gatt.ble_svc_imu_notify(gap.get_conn_handle());
-  if (rc == 0) {
-    MODLOG_DFLT(INFO, "Notification sent successfully");
-  } else {
-    MODLOG_DFLT(INFO, "Error in sending notification");
-  }
-
-  gatt.ble_imu_prph_tx_reset();
 }
 
 int GATT::dis_chr_access_cb(uint16_t conn_handle, uint16_t attr_handle,
@@ -170,35 +157,19 @@ int GATT::imu_bodyloc_chr_access_cb(uint16_t conn_handle, uint16_t attr_handle,
   return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 }
 
-int GATT::ble_svc_imu_notify(uint16_t conn_handle) {
+int GATT::ble_svc_imu_notify(node_data_t *p_node_data, uint16_t conn_handle) {
   int rc;
   struct os_mbuf *om;
-  static uint8_t imu_payload[12];
+  static uint8_t imu_payload[16];
 
-  static float x_angle = 5.0f;
-  static float y_angle = 150.0f;
-  static float z_angle = 50.0f;
+  auto [w, rx, ry, rz] = p_node_data->orientation_quaternion;
 
-  x_angle += 0.1f;
-  y_angle += 0.2f;
-  z_angle += 0.4f;
+  printf("%s,%f,%f,%f,%f\n", p_node_data->body_loc_str, w, rx, ry, rz);
 
-  memcpy(&imu_payload[0], &x_angle, sizeof(float));
-  memcpy(&imu_payload[4], &y_angle, sizeof(float));
-  memcpy(&imu_payload[8], &z_angle, sizeof(float));
-
-//  bno055_calibration_t cal = imu.getCalibration();
-//  bno055_vector_t v = imu.getVectorEuler();
-//  ESP_LOGI(tag, "Euler: X: %.1f Y: %.1f Z: %.1f || Calibration SYS: %u GYRO: %u ACC:%u MAG:%u",
-//           v.x, v.y, v.z,
-//           cal.sys, cal.gyro, cal.accel, cal.mag);
-//
-//  auto ax = static_cast<float>(v.x);
-//  auto ay = static_cast<float>(v.y);
-//  auto az = static_cast<float>(v.z);
-//  memcpy(&imu_payload[0], &ax, sizeof(float));
-//  memcpy(&imu_payload[4], &ay, sizeof(float));
-//  memcpy(&imu_payload[8], &az, sizeof(float));
+  memcpy(&imu_payload[0], &w, sizeof(float));
+  memcpy(&imu_payload[4], &ry, sizeof(float));
+  memcpy(&imu_payload[8], &rz, sizeof(float));
+  memcpy(&imu_payload[12], &rz, sizeof(float));
 
   for (unsigned char i : imu_payload) {
     printf("%02x ", i);
@@ -242,9 +213,19 @@ int GATT::init() {
     return rc;
   }
 
-  ble_imu_prph_tx_timer = xTimerCreate("ble_imu_prph_tx_timer", pdMS_TO_TICKS(1000), pdTRUE,
-                                            (void *)0, GATT::ble_imu_prph_tx);
+  imu_queue_handle = xQueueCreate(10, sizeof(quaternion_t));
+  if (imu_queue_handle == nullptr) {
+    printf("Failed to create queue instance\n");
+    return rc;
+  }
 
+  size_t actual_size;
+  read_string_from_nvs("BodyLoc", gatt.node_data.body_loc_str, &actual_size);
+
+  rc = xTaskCreate(ble_imu_prph_tx, "ble_imu_prph_tx", 4096, nullptr, 1, &ble_imu_prph_tx_handle);
+  if (rc != pdPASS) {
+    printf("Failed to create task for notifications\n");
+    return rc;
+  }
   return 0;
 }
-

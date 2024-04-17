@@ -7,7 +7,7 @@
 
 constexpr const char *SSID = "s23ultra";
 constexpr const char *PASSWORD = "12341234";
-constexpr const char *UDP_IP_ADDRESS = "192.168.42.165";
+constexpr const char *UDP_IP_ADDRESS = "192.168.214.165";
 constexpr size_t UDP_PORT = 1234;
 
 void UdpClient::udp_send_task(void *pvParameters) {
@@ -19,9 +19,9 @@ void UdpClient::udp_send_task(void *pvParameters) {
       continue;
     }
 
-    auto [ax, ay, az] = node_data.orientation;
-    printf("%s,%f,%f,%f\n", node_data.body_loc_str, -ay, ax, az);
-    sprintf(buff, "%s,%f,%f,%f\n", node_data.body_loc_str, -ay, ax, az);
+    auto [w, ax, ay, az] = node_data.orientation_quaternion;
+    printf("%s,%f,%f,%f,%f\n", node_data.body_loc_str, w, ax, ay, az);
+    sprintf(buff, "%s,%f,%f,%f,%f\n", node_data.body_loc_str, w, ax, ay, az);
 
     if (!udp_client.wifi_connected) {
       printf("Error not connected to wifi\n");
@@ -31,9 +31,6 @@ void UdpClient::udp_send_task(void *pvParameters) {
                (struct sockaddr *)& udp_client.udp_server_addr, sizeof(udp_server_addr)) < 0) {
       ESP_LOGE("udp_send_task", "Error occurred during sending: errno %d", errno);
     }
-//    else {
-//      ESP_LOGI("udp_send_task", "Packet sent successfully");
-//    }
   }
 }
 
@@ -61,7 +58,6 @@ void UdpClient::init() {
 
 void UdpClient::wifi_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id,
                                    void *event_data) {
-  static int retry_num=0;
   if(event_id == WIFI_EVENT_STA_START)
   {
     printf("WIFI CONNECTING....\n");
@@ -74,7 +70,8 @@ void UdpClient::wifi_event_handler(void *event_handler_arg, esp_event_base_t eve
   else if (event_id == WIFI_EVENT_STA_DISCONNECTED)
   {
     printf("WiFi lost connection\n");
-    if(retry_num<5){esp_wifi_connect();retry_num++;printf("Retrying to Connect...\n");}
+    esp_wifi_connect();
+    printf("Retrying to Connect...\n");
   }
   else if (event_id == IP_EVENT_STA_GOT_IP)
   {

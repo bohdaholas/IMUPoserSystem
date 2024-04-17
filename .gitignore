@@ -1,7 +1,9 @@
 IMUNode/central/build
+IMUNode/central/managed_components
+IMUNode/central/dependencies.lock
 IMUNode/periph/build
 IMUNode/periph/managed_components
-IMUNode/nvs_store_options/build
+IMUNode/nvs_store_options
 
 *.idea
 *.PVS-Studio

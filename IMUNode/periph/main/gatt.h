@@ -3,6 +3,7 @@
 
 #include <host/ble_uuid.h>
 #include <functional>
+#include "imu.h"
 
 extern "C" {
 
@@ -24,16 +25,20 @@ constexpr ble_uuid128_t IMU_SVC_CHR_DATA_UUID =
 constexpr ble_uuid128_t IMU_SVC_CHR_BODYLOC_UUID =
     BLE_UUID128_INIT(0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
                      0x39, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46);
+constexpr ble_uuid16_t CCCD = BLE_UUID16_INIT(0x2902);
+constexpr size_t MAX_BODYLOC_SIZE = 16;
+
+struct node_data_t {
+    char body_loc_str[MAX_BODYLOC_SIZE]{};
+    quaternion_t orientation_quaternion{};
+};
 
 class GATT {
 public:
     uint16_t char_handle_imu_data;
     uint16_t char_handle_body_sensor_location;
-    TimerHandle_t ble_imu_prph_tx_timer;
 
-    void ble_imu_prph_tx_stop() const;
-    void ble_imu_prph_tx_reset() const;
-    static void ble_imu_prph_tx(TimerHandle_t ev);
+    static void ble_imu_prph_tx(void *pvParameters);
 
     int dis_chr_access_cb(uint16_t conn_handle, uint16_t attr_handle,
                                  struct ble_gatt_access_ctxt *ctxt, void *arg);
@@ -45,9 +50,12 @@ public:
     static int execute_gatt_callback(uint16_t conn_handle, uint16_t attr_handle,
                                      struct ble_gatt_access_ctxt *ctxt, void *arg);
     int init();
+    QueueHandle_t imu_queue_handle = nullptr;
+    TaskHandle_t ble_imu_prph_tx_handle;
+    node_data_t node_data{};
 private:
 
-    int ble_svc_imu_notify(uint16_t conn_handle);
+    int ble_svc_imu_notify(node_data_t *p_node_data, uint16_t conn_handle);
 };
 
 inline GATT gatt;

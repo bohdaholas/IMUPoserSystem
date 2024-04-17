@@ -1,4 +1,5 @@
 dependencies:
+  espressif/eigen: "^3.4.0~2"
   idf:
     version: ">=4.1.0"
   BNO055ESP32:

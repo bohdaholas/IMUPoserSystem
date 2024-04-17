@@ -2,6 +2,7 @@
 #include <services/gap/ble_svc_gap.h>
 #include "gap.h"
 #include "gatt.h"
+#include "imu.h"
 
 void GAP::ble_prph_on_sync() {
   int rc;
@@ -77,7 +78,7 @@ int GAP::ble_prph_gap_event(struct ble_gap_event *event, void *arg) {
       MODLOG_DFLT(INFO, "disconnect; reason=%d\n", event->disconnect.reason);
 
       gap.ble_prph_advertise();
-      gatt.ble_imu_prph_tx_stop();
+      vTaskSuspend(gatt.ble_imu_prph_tx_handle);
 
       break;
 
@@ -94,7 +95,8 @@ int GAP::ble_prph_gap_event(struct ble_gap_event *event, void *arg) {
       gap.sub = true;
 
       if (event->subscribe.cur_notify) {
-        gatt.ble_imu_prph_tx_reset();
+        vTaskResume(gatt.ble_imu_prph_tx_handle);
+        imu.start_producer();
       }
 
       ESP_LOGI("BLE_GAP_SUBSCRIBE_EVENT", "conn_handle from subscribe=%d", gap.conn_handle);

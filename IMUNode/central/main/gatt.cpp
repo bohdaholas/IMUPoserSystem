@@ -8,6 +8,7 @@
 #include "gatt.h"
 #include "esp_central.h"
 #include "udp_client.h"
+#include "nvs_utils.h"
 
 void GATT::handle_notification(struct ble_gap_event *event) {
   int rc;
@@ -17,17 +18,33 @@ void GATT::handle_notification(struct ble_gap_event *event) {
 
   rc = os_mbuf_copydata(event->notify_rx.om, 0, data_len, data_buf);
   if (rc == 0) {
-    euler_angles_t orientation_euler;
-    for(size_t i = 0; i < orientation_euler.size(); ++i) {
-      memcpy(&orientation_euler[i], data_buf + (i * sizeof(float)), sizeof(float));
+    quaternion_t orientation_quaternion;
+    for(size_t i = 0; i < orientation_quaternion.size(); ++i) {
+      memcpy(&orientation_quaternion[i], data_buf + (i * sizeof(float)), sizeof(float));
     }
-    nodes_data[conn_handle].orientation = orientation_euler;
+    nodes_data[conn_handle].orientation_quaternion = orientation_quaternion;
 
     if(xQueueSend(udp_client.nodeDataQueue, &gatt.nodes_data[conn_handle], portMAX_DELAY) != pdPASS) {
       printf("Error: Failed to push data to the queue\n");
     }
   } else {
     printf("Error: Failed to copy data from mbuf.\n");
+  }
+}
+
+void GATT::handle_imu_data(void *pvParameters) {
+  for(;;) {
+    quaternion_t orientation_quaternion{};
+    if(xQueueReceive(gatt.imu_queue_handle, &orientation_quaternion, portMAX_DELAY) != pdPASS) {
+      printf("Error when reading from a queue\n");
+      continue;
+    }
+    if (udp_client.nodeDataQueue == nullptr) continue;
+
+    gatt.this_node_data.orientation_quaternion = orientation_quaternion;
+    if(xQueueSend(udp_client.nodeDataQueue, &gatt.this_node_data, portMAX_DELAY) != pdPASS) {
+      printf("Error: Failed to push data to the queue\n");
+    }
   }
 }
 
@@ -123,7 +140,19 @@ err:
   ble_gap_terminate(peer->conn_handle, BLE_ERR_REM_USER_CONN_TERM);
 }
 
-void GATT::init() {}
+void GATT::init() {
+  imu_queue_handle = xQueueCreate(10, sizeof(quaternion_t));
+  if (imu_queue_handle == nullptr) {
+    printf("Failed to create queue instance\n");
+    return;
+  }
+
+  size_t actual_size;
+  read_string_from_nvs("BodyLoc", this_node_data.body_loc_str, &actual_size);
+
+  xTaskCreate(handle_imu_data, "handle_imu_data", 2048, nullptr, 1, nullptr);
+}
+
 
 
 

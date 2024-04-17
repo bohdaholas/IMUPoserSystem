@@ -5,6 +5,7 @@
 #include <array>
 #include <map>
 #include <string>
+#include "imu.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,15 +29,15 @@ constexpr ble_uuid16_t CCCD = BLE_UUID16_INIT(0x2902);
 constexpr size_t MAX_BODYLOC_SIZE = 16;
 
 using conn_handle_t = uint16_t;
-using euler_angles_t = std::array<float, 3>;
 struct node_data_t {
     char body_loc_str[MAX_BODYLOC_SIZE];
-    euler_angles_t orientation{};
+    quaternion_t orientation_quaternion{};
 };
 
 class GATT {
 public:
     void handle_notification(struct ble_gap_event *event);
+    static void handle_imu_data(void *pvParameters);
     void ble_central_read(const struct peer *peer);
     static int ble_central_read_cb(uint16_t conn_handle, const struct ble_gatt_error *error,
                                    struct ble_gatt_attr *attr, void *arg);
@@ -44,8 +45,10 @@ public:
 
     void init();
 
+    QueueHandle_t imu_queue_handle = nullptr;
 private:
     std::map<conn_handle_t, node_data_t> nodes_data;
+    node_data_t this_node_data{};
 };
 
 inline GATT gatt;
