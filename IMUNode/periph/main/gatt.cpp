@@ -167,8 +167,8 @@ int GATT::ble_svc_imu_notify(node_data_t *p_node_data, uint16_t conn_handle) {
   printf("%s,%f,%f,%f,%f\n", p_node_data->body_loc_str, w, rx, ry, rz);
 
   memcpy(&imu_payload[0], &w, sizeof(float));
-  memcpy(&imu_payload[4], &ry, sizeof(float));
-  memcpy(&imu_payload[8], &rz, sizeof(float));
+  memcpy(&imu_payload[4], &rx, sizeof(float));
+  memcpy(&imu_payload[8], &ry, sizeof(float));
   memcpy(&imu_payload[12], &rz, sizeof(float));
 
   for (unsigned char i : imu_payload) {

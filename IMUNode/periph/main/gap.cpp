@@ -96,7 +96,6 @@ int GAP::ble_prph_gap_event(struct ble_gap_event *event, void *arg) {
 
       if (event->subscribe.cur_notify) {
         vTaskResume(gatt.ble_imu_prph_tx_handle);
-        imu.start_producer();
       }
 
       ESP_LOGI("BLE_GAP_SUBSCRIBE_EVENT", "conn_handle from subscribe=%d", gap.conn_handle);

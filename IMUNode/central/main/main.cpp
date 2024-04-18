@@ -39,7 +39,8 @@ void nimble_init() {
 
 extern "C" void app_main() {
   nvs_init();
-  imu.init(&gatt.imu_queue_handle);
+  imu.init(SensorFusionAlgorithm::BNO055_BUILTIN);
+  imu.start_producer(&gatt.imu_queue_handle);
   nimble_init();
   gap.init(device_name_cmplt);
   gatt.init();
