@@ -13,38 +13,6 @@
 constexpr const char *tag = "BNO055";
 
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
-    /* Device Information Service */
-    {
-        .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid = (const ble_uuid_t *) &DIS_SVC_UUID.u,
-        .characteristics = (struct ble_gatt_chr_def[]) {
-            {
-                /* Characteristic: Manufacturer name */
-                .uuid = (const ble_uuid_t *) &DIS_SVC_CHR_MFC_NAME_UUID.u,
-                .access_cb = GATT::execute_gatt_callback,
-                .arg = (void *) &DIS_CB_ID,
-                .flags = BLE_GATT_CHR_F_READ
-            },
-            {
-                /* Characteristic: Model number string */
-                .uuid = (const ble_uuid_t *) &DIS_SVC_CHR_MODEL_NO_UUID.u,
-                .access_cb = GATT::execute_gatt_callback,
-                .arg = (void *) &DIS_CB_ID,
-                .flags = BLE_GATT_CHR_F_READ
-            },
-            {
-                /* Characteristic: System ID */
-                .uuid = (const ble_uuid_t *) &DIS_SVC_CHR_SYS_ID_UUID.u,
-                .access_cb = GATT::execute_gatt_callback,
-                .arg = (void *) &DIS_CB_ID,
-                .flags = BLE_GATT_CHR_F_READ
-            },
-            {
-                0, /* No more characteristics in this service */
-            }
-        },
-    },
-
     /* Custom IMU Measurements Service */
     {
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
@@ -105,32 +73,6 @@ void GATT::ble_imu_prph_tx(void *pvParameters) {
   }
 }
 
-int GATT::dis_chr_access_cb(uint16_t conn_handle, uint16_t attr_handle,
-                            struct ble_gatt_access_ctxt *ctxt, void *arg) {
-  constexpr const char *manuf_name = "ESP32";
-  constexpr const char *model_num = "IMU node";
-  constexpr const char *system_id = "imu#21312";
-
-  uint16_t uuid;
-  int rc;
-
-  uuid = ble_uuid_u16(ctxt->chr->uuid);
-
-  switch (uuid) {
-    case DIS_SVC_CHR_MODEL_NO_UUID.value:
-      rc = os_mbuf_append(ctxt->om, model_num, strlen(model_num));
-      return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-    case DIS_SVC_CHR_MFC_NAME_UUID.value:
-      rc = os_mbuf_append(ctxt->om, manuf_name, strlen(manuf_name));
-      return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-    case DIS_SVC_CHR_SYS_ID_UUID.value:
-      rc = os_mbuf_append(ctxt->om, system_id, strlen(system_id));
-      return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-    default:
-      return BLE_ATT_ERR_UNLIKELY;
-  }
-}
-
 int GATT::imu_meas_chr_access_cb(uint16_t conn_handle, uint16_t attr_handle,
                                  struct ble_gatt_access_ctxt *ctxt, void *arg) {
   printf("Oh I'm here\n");
@@ -185,9 +127,7 @@ int GATT::ble_svc_imu_notify(node_data_t *p_node_data, uint16_t conn_handle) {
 int GATT::execute_gatt_callback(uint16_t conn_handle, uint16_t attr_handle,
                                 struct ble_gatt_access_ctxt *ctxt, void *arg) {
   size_t cb_id = *static_cast<size_t *>(arg);
-  if (cb_id == DIS_CB_ID) {
-    return gatt.dis_chr_access_cb(conn_handle, attr_handle, ctxt, nullptr);
-  } else if (cb_id == IMU_MEAS_CB_ID) {
+  if (cb_id == IMU_MEAS_CB_ID) {
     return gatt.imu_meas_chr_access_cb(conn_handle, attr_handle, ctxt, nullptr);
   } else if (cb_id == IMU_BODYLOC_CB_ID) {
     return gatt.imu_bodyloc_chr_access_cb(conn_handle, attr_handle, ctxt, nullptr);
@@ -201,7 +141,6 @@ int GATT::init() {
   int rc;
 
   ble_svc_gap_init();
-  ble_svc_gatt_init();
 
   rc = ble_gatts_count_cfg(gatt_svr_svcs);
   if (rc != 0) {

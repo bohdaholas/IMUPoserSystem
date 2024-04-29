@@ -7,14 +7,8 @@
 
 extern "C" {
 
-const size_t DIS_CB_ID = 0;
 const size_t IMU_MEAS_CB_ID = 1;
 const size_t IMU_BODYLOC_CB_ID = 2;
-
-constexpr ble_uuid16_t DIS_SVC_UUID = BLE_UUID16_INIT(0x180A);
-constexpr ble_uuid16_t DIS_SVC_CHR_MFC_NAME_UUID = BLE_UUID16_INIT(0x2A23);
-constexpr ble_uuid16_t DIS_SVC_CHR_MODEL_NO_UUID = BLE_UUID16_INIT(0x2A24);
-constexpr ble_uuid16_t DIS_SVC_CHR_SYS_ID_UUID = BLE_UUID16_INIT(0x2A29);
 
 constexpr ble_uuid128_t IMU_SVC_UUID =
     BLE_UUID128_INIT(0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -40,8 +34,6 @@ public:
 
     static void ble_imu_prph_tx(void *pvParameters);
 
-    int dis_chr_access_cb(uint16_t conn_handle, uint16_t attr_handle,
-                                 struct ble_gatt_access_ctxt *ctxt, void *arg);
     int imu_meas_chr_access_cb(uint16_t conn_handle, uint16_t attr_handle,
                                       struct ble_gatt_access_ctxt *ctxt, void *arg);
     int imu_bodyloc_chr_access_cb(uint16_t conn_handle, uint16_t attr_handle,

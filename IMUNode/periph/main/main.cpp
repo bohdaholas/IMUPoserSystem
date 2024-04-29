@@ -9,8 +9,8 @@
 #include "nvs_utils.h"
 #include "imu.h"
 
-static constexpr const char *device_name_cmplt = "leaf_imu_prph";
-static constexpr const char *device_name_short = "imu";
+static constexpr const char *device_name_cmplt = "secondary_imu_node";
+static constexpr const char *device_name_short = "sec_imu";
 
 void ble_imu_prph_host_task(void *param)
 {
@@ -36,7 +36,9 @@ extern "C" void app_main()
 {
     nvs_init();
     imu.init(SensorFusionAlgorithm::BNO055_BUILTIN);
-    imu.start_producer(&gatt.imu_queue_handle);
+    imu.run_calibration();
+    imu.wait_till_calibrated();
+    imu.start_measurements(&gatt.imu_queue_handle);
     nimble_init();
     gap.init(device_name_cmplt, device_name_short);
     gatt.init();

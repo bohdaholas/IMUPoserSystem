@@ -2,16 +2,17 @@
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 #include "host/ble_hs.h"
-#include "console/console.h"
 #include "services/gap/ble_svc_gap.h"
 #include "esp_central.h"
 #include "gap.h"
 #include "gatt.h"
-#include "udp_client.h"
 #include "imu.h"
 #include "nvs_utils.h"
+#include "wifi.h"
+#include "udp_client.h"
+#include "mqtt.h"
 
-static constexpr const char *device_name_cmplt = "leaf_imu_prph";
+static constexpr const char *device_name_cmplt = "imu_central";
 
 extern "C" void ble_store_config_init();
 
@@ -40,10 +41,14 @@ void nimble_init() {
 extern "C" void app_main() {
   nvs_init();
   imu.init(SensorFusionAlgorithm::BNO055_BUILTIN);
-  imu.start_producer(&gatt.imu_queue_handle);
+  imu.run_calibration();
+  imu.wait_till_calibrated();
+  imu.start_measurements(&gatt.imu_queue_handle);
   nimble_init();
   gap.init(device_name_cmplt);
   gatt.init();
+  wifi.init();
   udp_client.init();
+  mqtt_manager.init();
   nimble_port_freertos_init(ble_imu_central_host_task);
 }

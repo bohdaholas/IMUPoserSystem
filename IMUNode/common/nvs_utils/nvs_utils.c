@@ -54,7 +54,6 @@ void read_bytes_from_nvs(const char *key, char *value, size_t *length) {
   esp_err_t ret = nvs_open("storage", NVS_READONLY, &nvs_handle);
   ESP_ERROR_CHECK(ret);
 
-  // Read the size of memory needed for the string into "length"
   ret = nvs_get_blob(nvs_handle, key, NULL, length);
   if (ret != ESP_OK) {
     nvs_close(nvs_handle);
@@ -62,7 +61,6 @@ void read_bytes_from_nvs(const char *key, char *value, size_t *length) {
     return;
   }
 
-  // Read the string into "value"
   ret = nvs_get_blob(nvs_handle, key, value, length);
   if (ret != ESP_OK) {
     nvs_close(nvs_handle);

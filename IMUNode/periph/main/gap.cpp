@@ -33,12 +33,9 @@ void GAP::ble_prph_advertise() {
 
   fields.flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP;
 
-  fields.tx_pwr_lvl_is_present = 1;
-  fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
-
   fields.name = (uint8_t *) dev_name_short.c_str();
   fields.name_len = strlen(dev_name_short.c_str());
-  fields.name_is_complete = 1;
+  fields.name_is_complete = 0;
 
   ble_uuid128_t svc_uuid_array[] = {IMU_SVC_UUID};
   fields.uuids128 = svc_uuid_array;
