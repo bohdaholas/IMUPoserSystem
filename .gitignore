@@ -1,9 +1,13 @@
+IMUNode/bno055_calibration/build
+IMUNode/bno055_calibration/managed_components
 IMUNode/central/build
 IMUNode/central/managed_components
 IMUNode/central/dependencies.lock
 IMUNode/periph/build
 IMUNode/periph/managed_components
 IMUNode/nvs_store_options
+IMUNode/experiments/raw_measurements_stream/build
+IMUNode/experiments/raw_measurements_stream/managed_components
 
 *.idea
 *.PVS-Studio
