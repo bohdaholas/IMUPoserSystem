@@ -1,0 +1,22 @@
+dependencies:
+  BNO055ESP32:
+    component_hash: e34f79c624a83eaf71f4658bd8e9f400a86fbc0ee37770281f204deccd26039e
+    source:
+      git: https://github.com/ShellAddicted/BNO055ESP32.git
+      path: .
+      type: git
+    version: 0866cd3ca0fcb70ce869eab00a216d8b598b9d07
+  espressif/eigen:
+    component_hash: 64a82d75ea6b7cb9240398ce0b6616e905d71b83a734b2cf9cb58ad09dd4f5ea
+    source:
+      service_url: https://api.components.espressif.com/
+      type: service
+    version: 3.4.0~2
+  idf:
+    component_hash: null
+    source:
+      type: idf
+    version: 5.2.1
+manifest_hash: eef12e7556ec3d3358b9c2fa9babcd785d6e669cfe34732ebd633836b769aa40
+target: esp32
+version: 1.0.0
