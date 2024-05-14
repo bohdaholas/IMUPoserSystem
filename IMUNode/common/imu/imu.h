@@ -67,7 +67,8 @@ public:
   measurement_t readMagnetometer();
 
   quaternion_t orientation_quaternion{1, 0, 0, 0};
-  SemaphoreHandle_t is_calibrated_sema = nullptr;
+  EventGroupHandle_t imu_event_group = nullptr;
+  static constexpr int IS_CALIBRATED_BIT = BIT0;
   bool is_customly_calibrated = false;
 private:
   BNO055 bno;

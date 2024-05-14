@@ -39,7 +39,7 @@ void MQTT::init() {
   };
   vTaskDelay(pdMS_TO_TICKS(500));
   configure_button_n_led();
-//  wifi.wait_till_connected();
+  wifi.wait_till_connected();
   xTaskCreate(pub_msg_on_btn_press, "pub_msg_on_btn_press", 2048, nullptr, 10, nullptr);
   mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
   if (mqtt_client == nullptr) {
@@ -58,6 +58,7 @@ void MQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t
       break;
     case MQTT_EVENT_DISCONNECTED:
       ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+      wifi.wait_till_connected();
       break;
     case MQTT_EVENT_SUBSCRIBED:
       ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED");
@@ -97,6 +98,7 @@ void MQTT::pub_msg_on_btn_press(void *pvParameters) {
       printf("Button pressed, sending MQTT message.\n");
       led_state = !led_state;
       gpio_set_level(LED_PIN, led_state);
+      wifi.wait_till_connected();
       esp_mqtt_client_publish(mqtt_manager.mqtt_client, topic, "", 0, 1, 0);
       vTaskDelay(pdMS_TO_TICKS(200));
     }

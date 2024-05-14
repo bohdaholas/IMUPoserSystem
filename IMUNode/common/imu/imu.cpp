@@ -74,12 +74,12 @@ void Imu::calibrate_magnetometer() {
 }
 
 void Imu::run_calibration(bool recalibrate_accelerometer_gyroscope) {
-  if (is_calibrated_sema != nullptr) {
+  if (imu_event_group != nullptr) {
     // calibration already performed so no action
     return;
   }
   recalibrate_accel_gyro = recalibrate_accelerometer_gyroscope;
-  is_calibrated_sema = xSemaphoreCreateBinary();
+  imu_event_group = xEventGroupCreate();
   if (fusion_algorithm == SensorFusionAlgorithm::BNO055_BUILTIN) {
     calibration_file = "bno055_calib";
     xTaskCreate(run_bno055_calibration, "run_bno055_calibration",
@@ -108,7 +108,7 @@ void Imu::run_custom_calibration(void *pvParameters) {
 //    imu.calibrate_magnetometer();
     vTaskDelay(pdMS_TO_TICKS(500));
 
-    xSemaphoreGive(imu.is_calibrated_sema);
+    xEventGroupSetBits(imu.imu_event_group, IS_CALIBRATED_BIT);
     imu.is_customly_calibrated = true;
     vTaskDelete(nullptr);
   }
@@ -121,8 +121,9 @@ void Imu::run_bno055_calibration(void *pvParameters) {
   }
   for(;;) {
     bno055_calibration_t calibration = imu.get_calibration_status();
+    calibration_done = calibration.accel == 3 && calibration.mag == 3 && calibration.gyro == 3;
     if (imu.recalibrate_accel_gyro)
-      calibration_done = calibration.accel == 3 && calibration.mag == 3 && calibration.gyro == 3;
+      calibration_done = calibration.gyro == 3;
     else
       calibration_done = calibration.gyro == 3;
     printf("Calibration sys %d acc %d gyro %d mag %d\n",
@@ -132,16 +133,13 @@ void Imu::run_bno055_calibration(void *pvParameters) {
     imu.print_calib_params(&imu.calib_params);
     imu.nvs_save_calib_params();
 
-    xSemaphoreGive(imu.is_calibrated_sema);
+    xEventGroupSetBits(imu.imu_event_group, IS_CALIBRATED_BIT);
     vTaskDelete(nullptr);
   }
 }
 
 void Imu::wait_till_calibrated() {
-  if (xSemaphoreTake(is_calibrated_sema, portMAX_DELAY) != pdTRUE) {
-    ESP_LOGE("imu", "Error occurred when taking semaphore");
-  }
-  xSemaphoreGive(is_calibrated_sema);
+  xEventGroupWaitBits(imu_event_group, IS_CALIBRATED_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
 }
 
 void Imu::start_measurements(QueueHandle_t *queue_handle) {
@@ -409,7 +407,7 @@ measurement_t Imu::readMagnetometer() {
 void Imu::nvs_save_calib_params() {
   if (fusion_algorithm == SensorFusionAlgorithm::BNO055_BUILTIN) {
     if (recalibrate_accel_gyro) {
-      printf("writing calb params to %s ", calibration_file.c_str());
+      printf("writing calb params to %s \n", calibration_file.c_str());
       write_bytes_to_nvs(calibration_file.c_str(), calib_params.raw_bytes,
                          sizeof(calib_params.bno055_calib_params));
     } else {

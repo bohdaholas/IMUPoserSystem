@@ -7,15 +7,12 @@ constexpr const char *SSID = "s23ultra";
 constexpr const char *PASSWORD = "12341234";
 
 void Wifi::init() {
-  is_connected_semaphore = xSemaphoreCreateBinary();
+  wifi_event_group = xEventGroupCreate();
   connect_to_wifi();
 }
 
 void Wifi::wait_till_connected() {
-  if (xSemaphoreTake(wifi.is_connected_semaphore, portMAX_DELAY) != pdTRUE) {
-    ESP_LOGE("wifi", "Error occurred when taking semaphore");
-  }
-  xSemaphoreGive(wifi.is_connected_semaphore);
+  xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
 }
 
 void Wifi::connect_to_wifi() {
@@ -44,14 +41,12 @@ void Wifi::wifi_event_handler(void *event_handler_arg, esp_event_base_t event_ba
   }
   else if (event_id == WIFI_EVENT_STA_CONNECTED)
   {
-    xSemaphoreGive(wifi.is_connected_semaphore);
+    xEventGroupSetBits(wifi.wifi_event_group, WIFI_CONNECTED_BIT);
     printf("WiFi CONNECTED\n");
   }
   else if (event_id == WIFI_EVENT_STA_DISCONNECTED)
   {
-    if (xSemaphoreTake(wifi.is_connected_semaphore, portMAX_DELAY) != pdTRUE) {
-      ESP_LOGE("wifi", "Error occurred when taking semaphore");
-    }
+    xEventGroupClearBits(wifi.wifi_event_group, WIFI_CONNECTED_BIT);
     printf("WiFi lost connection\n");
     esp_wifi_connect();
     printf("Retrying to Connect...\n");

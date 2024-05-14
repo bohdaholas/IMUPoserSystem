@@ -14,6 +14,10 @@
 
 static constexpr const char *device_name_cmplt = "imu_central";
 
+// must be true when device has not passed calibration yet,
+// or has not passed calibration for a long time
+constexpr bool RECALIB_ACCEL_GYRO = true;
+
 extern "C" void ble_store_config_init();
 
 void ble_imu_central_host_task(void *param)
@@ -41,8 +45,7 @@ void nimble_init() {
 extern "C" void app_main() {
   nvs_init();
   imu.init(SensorFusionAlgorithm::BNO055_BUILTIN);
-  imu.run_calibration();
-  imu.wait_till_calibrated();
+  imu.run_calibration(RECALIB_ACCEL_GYRO);
   imu.start_measurements(&gatt.imu_queue_handle);
   nimble_init();
   gap.init(device_name_cmplt);
