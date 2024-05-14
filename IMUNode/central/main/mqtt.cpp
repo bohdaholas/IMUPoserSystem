@@ -1,35 +1,13 @@
 #include <esp_log.h>
 #include <driver/gpio.h>
 #include <sstream>
+#include "led.h"
+#include "button.h"
 #include "common_constants.h"
 #include "mqtt.h"
 #include "wifi.h"
 
 static const char *TAG = "MQTT";
-SemaphoreHandle_t debounce_semaphore;
-#define LED_PIN GPIO_NUM_2
-#define BUTTON_PIN GPIO_NUM_0
-
-static void IRAM_ATTR button_isr_handler(void* arg) {
-  xSemaphoreGiveFromISR(debounce_semaphore, nullptr);
-}
-
-void configure_button_n_led() {
-  gpio_config_t io_conf = {};
-  io_conf.intr_type = GPIO_INTR_POSEDGE;
-  io_conf.mode = GPIO_MODE_INPUT;
-  io_conf.pin_bit_mask = (1ULL << BUTTON_PIN);
-  io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
-  gpio_config(&io_conf);
-
-  gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT);
-
-  gpio_install_isr_service(ESP_INTR_FLAG_LEVEL1);
-  gpio_isr_handler_add(BUTTON_PIN, button_isr_handler, nullptr);
-
-  debounce_semaphore = xSemaphoreCreateBinary();
-}
-
 
 void MQTT::init() {
   std::stringstream uri_ss;
@@ -43,7 +21,6 @@ void MQTT::init() {
       }
   };
   vTaskDelay(pdMS_TO_TICKS(500));
-  configure_button_n_led();
   wifi.wait_till_connected();
   xTaskCreate(pub_msg_on_btn_press, "pub_msg_on_btn_press", 2048, nullptr, 10, nullptr);
   mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
@@ -95,17 +72,18 @@ void MQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t
   }
 }
 
-void MQTT::pub_msg_on_btn_press(void *pvParameters) {
+void MQTT::send_tpose_req_cb() {
   constexpr const char* topic = "tpose";
-  int led_state = 0;
-  while (1) {
-    if (xSemaphoreTake(debounce_semaphore, portMAX_DELAY) == pdTRUE) {
-      printf("Button pressed, sending MQTT message.\n");
-      led_state = !led_state;
-      gpio_set_level(LED_PIN, led_state);
-      wifi.wait_till_connected();
-      esp_mqtt_client_publish(mqtt_manager.mqtt_client, topic, "", 0, 1, 0);
-      vTaskDelay(pdMS_TO_TICKS(200));
-    }
+  printf("Button pressed, sending MQTT message.\n");
+  builtin_led.toggle();
+  wifi.wait_till_connected();
+  esp_mqtt_client_publish(mqtt_manager.mqtt_client, topic, "", 0, 1, 0);
+}
+
+void MQTT::pub_msg_on_btn_press(void *pvParameters) {
+  builtin_button.set_cb_on_btn_press(send_tpose_req_cb);
+  while (true) {
+    builtin_button.run_cb_on_btn_press();
+    vTaskDelay(pdMS_TO_TICKS(200));
   }
 }

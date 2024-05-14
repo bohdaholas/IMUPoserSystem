@@ -34,7 +34,7 @@ public:
   Imu();
   void init(SensorFusionAlgorithm mode);
 
-    /** Methods for passing calibration stage **/
+  /** Methods for passing calibration stage **/
   void run_calibration(bool recalibrate_accel_gyro=false);
   static void run_custom_calibration(void *pvParameters);
   static void run_bno055_calibration(void *pvParameters);

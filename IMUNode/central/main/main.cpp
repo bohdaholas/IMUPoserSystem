@@ -11,6 +11,8 @@
 #include "wifi.h"
 #include "udp_client.h"
 #include "mqtt.h"
+#include "led.h"
+#include "button.h"
 
 static constexpr const char *device_name_cmplt = "imu_central";
 
@@ -44,6 +46,10 @@ void nimble_init() {
 
 extern "C" void app_main() {
   nvs_init();
+  builtin_led.init();
+  builtin_led.on();
+  builtin_button.init();
+  builtin_button.conf_btn_press_detection();
   imu.init(SensorFusionAlgorithm::BNO055_BUILTIN);
   imu.run_calibration(RECALIB_ACCEL_GYRO);
   imu.start_measurements(&gatt.imu_queue_handle);

@@ -68,6 +68,8 @@ void Imu::calibrate_accelerometer() {
   imu.calib_params.custom_calib_params.accel_offsets = {
       0.06511262, 0.58956167, 0.2874256
   };
+
+
 }
 
 void Imu::calibrate_magnetometer() {

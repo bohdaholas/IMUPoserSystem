@@ -13,6 +13,7 @@ public:
     static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
     static void pub_msg_on_btn_press(void *pvParameters);
 
+    static void send_tpose_req_cb();
 private:
     esp_mqtt_client_handle_t mqtt_client = nullptr;
 };
