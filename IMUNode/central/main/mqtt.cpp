@@ -1,9 +1,11 @@
 #include <esp_log.h>
 #include <driver/gpio.h>
+#include <sstream>
+#include "common_constants.h"
 #include "mqtt.h"
 #include "wifi.h"
 
-static const char *TAG = "MQTT_BUTTON";
+static const char *TAG = "MQTT";
 SemaphoreHandle_t debounce_semaphore;
 #define LED_PIN GPIO_NUM_2
 #define BUTTON_PIN GPIO_NUM_0
@@ -30,10 +32,13 @@ void configure_button_n_led() {
 
 
 void MQTT::init() {
+  std::stringstream uri_ss;
+  uri_ss << "mqtt://" << HOST_IP_ADDRESS << ":" << std::to_string(MQTT_PORT);
+  std::string uri = uri_ss.str();
   const esp_mqtt_client_config_t mqtt_cfg = {
       .broker {
           .address {
-              .uri = "mqtt://192.168.214.165:1884"
+              .uri = uri.c_str()
           }
       }
   };

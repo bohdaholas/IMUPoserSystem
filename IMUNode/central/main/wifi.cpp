@@ -1,10 +1,8 @@
 #include <esp_wifi.h>
 #include <cstring>
 #include <esp_log.h>
+#include "common_constants.h"
 #include "wifi.h"
-
-constexpr const char *SSID = "s23ultra";
-constexpr const char *PASSWORD = "12341234";
 
 void Wifi::init() {
   wifi_event_group = xEventGroupCreate();

@@ -16,7 +16,7 @@ static constexpr const char *device_name_cmplt = "imu_central";
 
 // must be true when device has not passed calibration yet,
 // or has not passed calibration for a long time
-constexpr bool RECALIB_ACCEL_GYRO = true;
+constexpr bool RECALIB_ACCEL_GYRO = false;
 
 extern "C" void ble_store_config_init();
 

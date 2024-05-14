@@ -4,9 +4,7 @@
 #include "lwip/sockets.h"
 #include "gatt.h"
 #include "wifi.h"
-
-constexpr const char *UDP_IP_ADDRESS = "192.168.214.165";
-constexpr size_t UDP_PORT = 1234;
+#include "common_constants.h"
 
 static void clear_queue(QueueHandle_t xQueue) {
   BaseType_t xQueueEmpty;
@@ -52,7 +50,7 @@ void UdpClient::init() {
     return;
   }
 
-  udp_server_addr.sin_addr.s_addr = inet_addr(UDP_IP_ADDRESS);
+  udp_server_addr.sin_addr.s_addr = inet_addr(HOST_IP_ADDRESS);
   udp_server_addr.sin_family = AF_INET;
   udp_server_addr.sin_port = htons(UDP_PORT);
 

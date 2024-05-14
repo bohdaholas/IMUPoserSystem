@@ -121,9 +121,8 @@ void Imu::run_bno055_calibration(void *pvParameters) {
   }
   for(;;) {
     bno055_calibration_t calibration = imu.get_calibration_status();
-    calibration_done = calibration.accel == 3 && calibration.mag == 3 && calibration.gyro == 3;
     if (imu.recalibrate_accel_gyro)
-      calibration_done = calibration.gyro == 3;
+      calibration_done = calibration.accel == 3 && calibration.mag == 3 && calibration.gyro == 3;
     else
       calibration_done = calibration.gyro == 3;
     printf("Calibration sys %d acc %d gyro %d mag %d\n",
