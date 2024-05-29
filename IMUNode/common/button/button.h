@@ -17,6 +17,7 @@ public:
     void conf_btn_press_detection();
     void set_cb_on_btn_press(std::function<void()> cb);
     void run_cb_on_btn_press();
+    void wait_for_btn_press();
 
     SemaphoreHandle_t debounce_semaphore = nullptr;
 private:

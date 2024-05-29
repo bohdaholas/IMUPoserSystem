@@ -37,4 +37,11 @@ void Button::run_cb_on_btn_press() {
   }
 }
 
+void Button::wait_for_btn_press() {
+  constexpr size_t DEBOUNCE_DELAY_MS = 200;
+  if (xSemaphoreTake(debounce_semaphore, portMAX_DELAY) == pdTRUE) {
+    vTaskDelay(DEBOUNCE_DELAY_MS);
+  }
+}
+
 

@@ -18,7 +18,7 @@ static constexpr const char *device_name_cmplt = "imu_central";
 
 // must be true when device has not passed calibration yet,
 // or has not passed calibration for a long time
-constexpr bool RECALIB_ACCEL_GYRO = false;
+constexpr bool RECALIB_ACCEL_GYRO = true;
 
 extern "C" void ble_store_config_init();
 
@@ -50,7 +50,7 @@ extern "C" void app_main() {
   builtin_led.on();
   builtin_button.init();
   builtin_button.conf_btn_press_detection();
-  imu.init(SensorFusionAlgorithm::BNO055_BUILTIN);
+  imu.init(SensorFusionAlgorithm::MADGWICK_FILTER);
   imu.run_calibration(RECALIB_ACCEL_GYRO);
   imu.start_measurements(&gatt.imu_queue_handle);
   nimble_init();

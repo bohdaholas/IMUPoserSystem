@@ -76,6 +76,7 @@ private:
   QueueHandle_t *gatt_queue_handle = nullptr;
   SensorFusionAlgorithm fusion_algorithm;
   imu_calib_params_t calib_params;
+
   std::string calibration_file;
   bool recalibrate_accel_gyro;
 };
