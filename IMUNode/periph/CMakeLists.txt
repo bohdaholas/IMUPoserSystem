@@ -7,5 +7,6 @@ cmake_minimum_required(VERSION 3.16)
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 set(IDF_COMPONENT_MANAGER "1" CACHE INTERNAL "")
 set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_LIST_DIR}/../common/nvs_utils
-                         ${CMAKE_CURRENT_LIST_DIR}/../common/imu)
+                         ${CMAKE_CURRENT_LIST_DIR}/../common/imu
+                         ${CMAKE_CURRENT_LIST_DIR}/../common/button)
 project(periph)

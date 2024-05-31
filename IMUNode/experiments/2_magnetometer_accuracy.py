@@ -32,7 +32,6 @@ if __name__ == "__main__":
     # calibration_used = "no_calibration"
     calibration_used = "bno055_calibration"
     # calibration_used = "custom_calibration"
-    LVIV_MAG_FIELD_STRENGTH = 43.964
 
     tests = []
     test_cases = ("field strength test",)
@@ -48,12 +47,11 @@ if __name__ == "__main__":
             continue
         np_measurements = np.array(measurements)
         measurements_norms = np.linalg.norm(np_measurements, axis=1)
-        average_field_strength = np.sum(measurements_norms) / len(measurements_norms)
-        absolute_errors = np.abs(measurements_norms - LVIV_MAG_FIELD_STRENGTH)
+        average_field_strength = measurements_norms.mean()
+        absolute_errors = np.abs(measurements_norms - average_field_strength)
         mae = np.mean(absolute_errors)
-        relative_errors = absolute_errors / LVIV_MAG_FIELD_STRENGTH
-        mre = np.mean(relative_errors) * 100
-        test_case_results = (test_cases[i], [average_field_strength, mae, mre])
+        rmse = np.sqrt(np.mean(np.square(absolute_errors), axis=0))
+        test_case_results = (test_cases[i], [average_field_strength, mae, rmse])
         print(f"Test case: {test_cases[i]}\nResults: {test_case_results}\n")
         tests.append(test_case_results)
         i += 1
@@ -62,7 +60,7 @@ if __name__ == "__main__":
     with open(filename, 'w') as results_file:
         for test_case, results in tests:
             average_strength, abs_err, rel_err = results
-            result_str = (f"Test case: {test_case}, Reference magnetic field strength: {LVIV_MAG_FIELD_STRENGTH}"
+            result_str = (f"Test case: {test_case}"
                           f"\nResults: Average magnetic field strength (mT) = {average_strength} Absolute error (mT) = {abs_err}, Relative error (%) = {rel_err}\n\n")
             results_file.write(result_str)
 

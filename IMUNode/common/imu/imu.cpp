@@ -133,13 +133,13 @@ void Imu::run_custom_calibration(void *pvParameters) {
   for(;;) {
     if (imu.recalibrate_accel_gyro) {
       printf("Calibrating gyro...\n");
-//      imu.calibrate_gyro();
+      imu.calibrate_gyro();
 
       printf("Calibrating accelerometer...\n");
       imu.calibrate_accelerometer();
     }
     printf("Calibrating magnetometer...\n");
-//    imu.calibrate_magnetometer();
+    imu.calibrate_magnetometer();
     vTaskDelay(pdMS_TO_TICKS(500));
     imu.nvs_save_calib_params();
 
@@ -180,7 +180,7 @@ void Imu::start_measurements(QueueHandle_t *queue_handle) {
   imu.wait_till_calibrated();
   printf("Calibration done\n");
   gatt_queue_handle = queue_handle;
-  imu_timer_handle = xTimerCreate("imu_timer_handle", pdMS_TO_TICKS(100), pdTRUE, (void *)0, get_measurements);
+  imu_timer_handle = xTimerCreate("imu_timer_handle", pdMS_TO_TICKS(16), pdTRUE, (void *)0, get_measurements);
   if (imu_timer_handle == nullptr) {
     ESP_LOGE("app_main", "Timer create failed");
   } else {
@@ -385,10 +385,10 @@ measurement_t Imu::readGyroscope() {
 measurement_t Imu::readMagnetometer() {
   bno055_vector_t v = bno.getVectorMagnetometer();
   if (fusion_algorithm == SensorFusionAlgorithm::MADGWICK_FILTER && is_customly_calibrated) {
-//    auto [m_offset_x, m_offset_y, m_offset_z] = calib_params.custom_calib_params.mag_offsets;
-//    v.x -= m_offset_x;
-//    v.y -= m_offset_y;
-//    v.z -= m_offset_z;
+    auto [m_offset_x, m_offset_y, m_offset_z] = calib_params.custom_calib_params.mag_offsets;
+    v.x += m_offset_x;
+    v.y += m_offset_y;
+    v.z += m_offset_z;
   }
   return {static_cast<float>(v.x), static_cast<float>(v.y), static_cast<float>(v.z)};
 }

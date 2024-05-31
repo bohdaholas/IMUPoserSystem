@@ -5,4 +5,5 @@ idf_component_register(
     REQUIRES esp_wifi
     REQUIRES bt
     REQUIRES imu
+    REQUIRES button
 )

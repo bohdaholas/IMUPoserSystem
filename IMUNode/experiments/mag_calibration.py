@@ -1,6 +1,8 @@
 import numpy as np
 from numpy.linalg import norm, inv
 
+# Calibration algorithm used is described here https://pmc.ncbi.nlm.nih.gov/articles/PMC8401862/
+
 # Constants and initial values - to be defined based on actual problem setup
 measurements = [
  [33.6, -33.6, -8.1],
@@ -334,22 +336,17 @@ measurements = [
 ]
 Y = np.array(measurements).T
 K = Y.shape[1]
-# Measurement matrix, needs to be provided or calculated
-tolerance = 1e-6  # Tolerance level for convergence
-max_iterations = 1000  # Maximum number of iterations
+tolerance = 1e-6
+max_iterations = 1000
 
 # Step 1: Initialize mk using (59)
-# Assuming Yk is given or calculated before this step
 # mk = Yk / ||Yk|| for k = 1, 2, ..., K
-# Initialize mk array
 mk = np.array([Y[:, k] / norm(Y[:, k]) for k in range(K)]).T
 
-# Function to calculate the cost-plus-penalty function J (65)
 def cost_function(mk):
     return sum((norm(mk[:, k]) ** 2 - 1) ** 2 for k in range(K))
 
-# Begin iteration
-J = float('inf')  # Initialize J to a large value
+J = float('inf')
 iteration = 0
 while J > tolerance and iteration < max_iterations:
     # Step 2: Calculate L using (62)
@@ -357,8 +354,8 @@ while J > tolerance and iteration < max_iterations:
     L = Y @ G.T @ inv(G @ G.T)  # Calculate L (62)
 
     # Step 3: Extract T and h from L using (61b)
-    T = L[:, :-1]  # Calibration parameters T
-    h = L[:, -1]  # Calibration parameter h
+    T = L[:, :-1]
+    h = L[:, -1]
 
     # Step 4: Update mk using (63) and (64)
     for k in range(K):
@@ -368,16 +365,13 @@ while J > tolerance and iteration < max_iterations:
     # Step 5: Evaluate the cost-plus-penalty function J from (65)
     J = cost_function(mk)
 
-    # Increment iteration counter
     iteration += 1
 
-# Check for convergence
 if iteration < max_iterations:
     print("Convergence reached after", iteration, "iterations.")
 else:
     print("Max iterations reached without convergence.")
 
-# Final calibration parameters
 T_final = T
 h_final = h
 J_final = J
